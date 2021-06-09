@@ -1,0 +1,53 @@
+services:
+    reverseproxy:
+        image: 'ratchadj2016/commerce-reverseproxy'
+        depends_on:
+            - backend-ecommerce
+            - backend-ecommerce-db
+        ports:
+            - '80:80'
+            - '443:443'
+        networks:
+            - app-network
+    backend-ecommerce:
+        image: 'ratchadj2016/commerce-backend'
+        networks:
+            - app-network
+    backend-ecommerce-db:
+        image: 'ratchadj2016/commerce-backend-db'
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: magento2
+            MYSQL_USER: magento2
+            MYSQL_PASSWORD: magento2
+        ports:
+            - "3306:3306"
+        networks:
+            - app-network
+    redis:
+        image: 'ratchadj2016/commerce-redis'
+        ports:
+            - "6379:6379"
+        networks:
+            - app-network
+    elasticsearch:
+        image: 'ratchadj2016/commerce-elasticsearch'
+        environment:
+            - node.name=es01
+            - cluster.name=es-docker-cluster
+            - discovery.seed_hosts=es02,es03
+            - cluster.initial_master_nodes=es01,es02,es03
+            - bootstrap.memory_lock=true
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ulimits:
+            memlock:
+              soft: -1
+              hard: -1
+        ports:
+            - 9200:9200
+        networks:
+            - app-network
+networks:
+    app-network:
+        driver: bridge  
